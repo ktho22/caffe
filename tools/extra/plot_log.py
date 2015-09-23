@@ -25,9 +25,9 @@ def create_field_index():
     test_key = 'Test'
     field_index = {
         train_key:{'NumIters':0, 'Seconds':1, train_key+' LearningRate':2, \
-                train_key+' accuracy':2,train_key+' loss':3}
+                train_key+' accuracy':3,train_key+' loss':4}
         ,test_key:{'NumIters':0, 'Seconds':1, test_key+' LearningRate':2, \
-                test_key+' accuracy':2,test_key+' loss':3}}
+                test_key+' accuracy':3,test_key+' loss':4}}
     fields = set()
     for data_file_type in field_index.keys():
         fields = fields.union(set(field_index[data_file_type].keys()))
@@ -68,7 +68,7 @@ def get_field_descriptions(chart_type):
     x_axis_field = description[1]
     return x_axis_field, y_axis_field    
 
-def get_field_indecies(x_axis_field, y_axis_field):    
+def get_field_indecies(x_axis_field, y_axis_field, chart_type):    
     data_file_type = get_data_file_type(chart_type)
     fields = create_field_index()[0][data_file_type]
     return fields[x_axis_field], fields[y_axis_field]
@@ -109,37 +109,38 @@ def plot_chart(chart_type, path_to_png, path_to_log_list):
         train_dict_list, test_dict_list = parse_log.parse_log(path_to_log)
         parse_log.save_csv_files(path_to_log, os.path.dirname(os.path.abspath(path_to_log)), \
                 train_dict_list, test_dict_list, "\t")
-        ipdb.set_trace()       
-        data_file = get_data_file(chart_type, path_to_log)
-        x_axis_field, y_axis_field = get_field_descriptions(chart_type)
-        x, y = get_field_indecies(x_axis_field, y_axis_field)
-        data = load_data(data_file, x, y)
-        ## TODO: more systematic color cycle for lines
-        color = [random.random(), random.random(), random.random()]
-        label = get_data_label(path_to_log)
-        linewidth = 0.75
-        ## If there too many datapoints, do not use marker.
-##        use_marker = False
-        use_marker = True
-        if not use_marker:
-            plt.plot(data[0], data[1], label = label, color = color,
-                     linewidth = linewidth)
-        else:
-            ok = False
-            ## Some markers throw ValueError: Unrecognized marker style
-            while not ok:
-                try:
-                    marker = random_marker()
-                    plt.plot(data[0], data[1], label = label, color = color,
-                             marker = marker, linewidth = linewidth)
-                    ok = True
-                except:
-                    pass
-    legend_loc = get_legend_loc(chart_type)
+        
+        for chart in chart_type:
+            data_file = get_data_file(chart, path_to_log)
+            x_axis_field, y_axis_field = get_field_descriptions(chart)
+            x, y = get_field_indecies(x_axis_field, y_axis_field, chart)
+            data = load_data(data_file, x, y)
+            ## TODO: more systematic color cycle for lines
+            color = [random.random(), random.random(), random.random()]
+            label = get_data_label(path_to_log) + y_axis_field
+            linewidth = 0.75
+            ## If there too many datapoints, do not use marker.
+    ##        use_marker = False
+            use_marker = True
+            if not use_marker:
+                plt.plot(data[0], data[1], label = label, color = color,
+                         linewidth = linewidth)
+            else:
+                ok = False
+                ## Some markers throw ValueError: Unrecognized marker style
+                while not ok:
+                    try:
+                        marker = random_marker()
+                        plt.plot(data[0], data[1], label = label, color = color,
+                                 marker = marker, linewidth = linewidth)
+                        ok = True
+                    except:
+                        pass
+    legend_loc = get_legend_loc(chart_type[0])
     plt.legend(loc = legend_loc, ncol = 1) # ajust ncol to fit the space
-    plt.title(get_chart_type_description(chart_type))
+    #plt.title(get_chart_type_description(chart_type))
     plt.xlabel(x_axis_field)
-    plt.ylabel(y_axis_field)  
+    #plt.ylabel(y_axis_field)  
     plt.savefig(path_to_png)     
     plt.show()
 
@@ -170,9 +171,9 @@ if __name__ == '__main__':
     if len(sys.argv) < 4:
         print_help()
     else:
-        chart_type = int(sys.argv[1])
-        if not is_valid_chart_type(chart_type):
-            print_help()
+        chart_type = eval(sys.argv[1])
+        if type(chart_type) == int:
+            chart_type = list(chart_type)
         path_to_png = sys.argv[2]
         if not path_to_png.endswith('.png'):
             print 'Path must ends with png' % path_to_png
