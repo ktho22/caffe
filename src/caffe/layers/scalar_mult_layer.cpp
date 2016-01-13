@@ -22,9 +22,9 @@ namespace caffe {
                 const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
             const int count = top[0]->count();
             Dtype* top_data = top[0]->mutable_cpu_data();
-            Dtype* Scale_data = bottom[0]->cpu_data()
+            const Dtype* Scale_data = bottom[0]->cpu_data();
 
-            for(int i = 0; i < count; i ++){
+            for(int i = 0; i < count; i++){
                 caffe_cpu_scale(count, Scale_data[i], bottom[1]->cpu_data()[i], top_data[i]);
             }
         }
